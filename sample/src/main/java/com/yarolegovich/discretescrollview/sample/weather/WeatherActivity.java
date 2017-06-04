@@ -1,9 +1,9 @@
 package com.yarolegovich.discretescrollview.sample.weather;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 
 import com.yarolegovich.discretescrollview.DiscreteScrollView;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public class WeatherActivity extends AppCompatActivity implements
         DiscreteScrollView.ScrollStateChangeListener<ForecastAdapter.ViewHolder>,
-        DiscreteScrollView.CurrentItemChangeListener<ForecastAdapter.ViewHolder>,
+        DiscreteScrollView.OnItemChangedListener<ForecastAdapter.ViewHolder>,
         View.OnClickListener {
 
     private List<Forecast> forecasts;
@@ -37,8 +37,8 @@ public class WeatherActivity extends AppCompatActivity implements
         forecasts = WeatherStation.get().getForecasts();
         cityPicker = (DiscreteScrollView) findViewById(R.id.forecast_city_picker);
         cityPicker.setAdapter(new ForecastAdapter(forecasts));
-        cityPicker.setCurrentItemChangeListener(this);
-        cityPicker.setScrollStateChangeListener(this);
+        cityPicker.addOnItemChangedListener(this);
+        cityPicker.addScrollStateChangeListener(this);
         cityPicker.scrollToPosition(2);
         cityPicker.setItemTransitionTimeMillis(DiscreteScrollViewOptions.getTransitionTime());
         cityPicker.setItemTransformer(new ScaleTransformer.Builder()
@@ -53,18 +53,24 @@ public class WeatherActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onCurrentItemChanged(ForecastAdapter.ViewHolder holder, int position) {
-        forecastView.setForecast(forecasts.get(position));
-        holder.showText();
+    public void onCurrentItemChanged(@Nullable ForecastAdapter.ViewHolder holder, int position) {
+        //viewHolder will never be null, because we never remove items from adapter's list
+        if (holder != null) {
+            forecastView.setForecast(forecasts.get(position));
+            holder.showText();
+        }
     }
 
     @Override
-    public void onScrollStart(ForecastAdapter.ViewHolder holder, int position) {
+    public void onScrollStart(@NonNull ForecastAdapter.ViewHolder holder, int position) {
         holder.hideText();
     }
 
     @Override
-    public void onScroll(float position) {
+    public void onScroll(
+            float position,
+            @NonNull ForecastAdapter.ViewHolder currentHolder,
+            @NonNull ForecastAdapter.ViewHolder newHolder) {
         Forecast current = forecasts.get(cityPicker.getCurrentItem());
         int nextPosition = cityPicker.getCurrentItem() + (position > 0 ? -1 : 1);
         if (nextPosition >= 0 && nextPosition < cityPicker.getAdapter().getItemCount()) {
@@ -89,7 +95,7 @@ public class WeatherActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onScrollEnd(ForecastAdapter.ViewHolder holder, int position) {
+    public void onScrollEnd(@NonNull ForecastAdapter.ViewHolder holder, int position) {
 
     }
 }

@@ -1,6 +1,7 @@
 package com.yarolegovich.discretescrollview.sample.shop;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
@@ -11,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.yarolegovich.discretescrollview.DiscreteScrollView;
+import com.yarolegovich.discretescrollview.InfiniteScrollAdapter;
+import com.yarolegovich.discretescrollview.Orientation;
 import com.yarolegovich.discretescrollview.sample.DiscreteScrollViewOptions;
 import com.yarolegovich.discretescrollview.sample.R;
 import com.yarolegovich.discretescrollview.transform.ScaleTransformer;
@@ -21,7 +24,7 @@ import java.util.List;
  * Created by yarolegovich on 07.03.2017.
  */
 
-public class ShopActivity extends AppCompatActivity implements DiscreteScrollView.CurrentItemChangeListener,
+public class ShopActivity extends AppCompatActivity implements DiscreteScrollView.OnItemChangedListener,
         View.OnClickListener {
 
     private List<Item> data;
@@ -31,6 +34,7 @@ public class ShopActivity extends AppCompatActivity implements DiscreteScrollVie
     private TextView currentItemPrice;
     private ImageView rateItemButton;
     private DiscreteScrollView itemPicker;
+    private InfiniteScrollAdapter infiniteAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,8 +48,10 @@ public class ShopActivity extends AppCompatActivity implements DiscreteScrollVie
         shop = Shop.get();
         data = shop.getData();
         itemPicker = (DiscreteScrollView) findViewById(R.id.item_picker);
-        itemPicker.setCurrentItemChangeListener(this);
-        itemPicker.setAdapter(new ShopAdapter(data));
+        itemPicker.setOrientation(Orientation.HORIZONTAL);
+        itemPicker.addOnItemChangedListener(this);
+        infiniteAdapter = InfiniteScrollAdapter.wrap(new ShopAdapter(data));
+        itemPicker.setAdapter(infiniteAdapter);
         itemPicker.setItemTransitionTimeMillis(DiscreteScrollViewOptions.getTransitionTime());
         itemPicker.setItemTransformer(new ScaleTransformer.Builder()
                 .setMinScale(0.8f)
@@ -102,8 +108,9 @@ public class ShopActivity extends AppCompatActivity implements DiscreteScrollVie
     }
 
     @Override
-    public void onCurrentItemChanged(RecyclerView.ViewHolder viewHolder, int position) {
-        onItemChanged(data.get(position));
+    public void onCurrentItemChanged(@Nullable RecyclerView.ViewHolder viewHolder, int position) {
+        int positionInDataSet = infiniteAdapter.getRealPosition(position);
+        onItemChanged(data.get(positionInDataSet));
     }
 
     private void showUnsupportedSnackBar() {

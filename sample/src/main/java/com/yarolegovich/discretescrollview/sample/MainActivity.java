@@ -3,22 +3,17 @@ package com.yarolegovich.discretescrollview.sample;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.Toast;
 
-import com.yarolegovich.discretescrollview.DiscreteScrollView;
+import com.yarolegovich.discretescrollview.sample.gallery.GalleryActivity;
 import com.yarolegovich.discretescrollview.sample.shop.ShopActivity;
 import com.yarolegovich.discretescrollview.sample.weather.WeatherActivity;
-import com.yarolegovich.discretescrollview.transform.Pivot;
-import com.yarolegovich.discretescrollview.transform.ScaleTransformer;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -42,6 +37,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         findViewById(R.id.preview_shop).setOnClickListener(this);
         findViewById(R.id.preview_weather).setOnClickListener(this);
+        findViewById(R.id.preview_vertical).setOnClickListener(this);
 
         findViewById(R.id.credit_city_icons).setOnClickListener(this);
         findViewById(R.id.credit_shop_photos).setOnClickListener(this);
@@ -72,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.preview_weather:
                 start(WeatherActivity.class);
+                break;
+            case R.id.preview_vertical:
+                start(GalleryActivity.class);
                 break;
             case R.id.credit_city_icons:
                 open(URL_CITY_ICONS);
