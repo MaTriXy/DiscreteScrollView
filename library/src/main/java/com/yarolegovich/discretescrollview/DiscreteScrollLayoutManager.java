@@ -92,6 +92,10 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
             return;
         }
 
+        if (currentPosition == NO_POSITION) {
+            currentPosition = 0;
+        }
+
         //onLayoutChildren may be called multiple times and this check is required so that the flag
         //won't be cleared until onLayoutCompleted
         if (!isFirstOrEmptyLayout) {
@@ -413,7 +417,7 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
 
     public void onFling(int velocityX, int velocityY) {
         int velocity = orientationHelper.getFlingVelocity(velocityX, velocityY);
-        int throttleValue = shouldSlideOnFling ? Math.abs(velocityX / flingThreshold) : 1;
+        int throttleValue = shouldSlideOnFling ? Math.abs(velocity / flingThreshold) : 1;
         int newPosition = currentPosition + Direction.fromDelta(velocity).applyTo(throttleValue);
         newPosition = checkNewOnFlingPositionIsInBounds(newPosition);
         boolean isInScrollDirection = velocity * scrolled >= 0;
@@ -475,11 +479,10 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
 
     @Override
     public void onAdapterChanged(RecyclerView.Adapter oldAdapter, RecyclerView.Adapter newAdapter) {
-        if (newAdapter.getItemCount() > 0) {
-            pendingPosition = NO_POSITION;
-            scrolled = pendingScroll = 0;
-            currentPosition = 0;
-        }
+        pendingPosition = NO_POSITION;
+        scrolled = pendingScroll = 0;
+        currentPosition = 0;
+
         removeAllViews();
     }
 
