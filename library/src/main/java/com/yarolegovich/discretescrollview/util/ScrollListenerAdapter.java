@@ -1,8 +1,9 @@
 package com.yarolegovich.discretescrollview.util;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.yarolegovich.discretescrollview.DiscreteScrollView;
 
@@ -37,7 +38,7 @@ public class ScrollListenerAdapter<T extends RecyclerView.ViewHolder> implements
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ScrollListenerAdapter) {
-            return adaptee.equals(((ScrollListenerAdapter) obj).adaptee);
+            return adaptee.equals(((ScrollListenerAdapter<?>) obj).adaptee);
         } else {
             return super.equals(obj);
         }

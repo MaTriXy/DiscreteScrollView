@@ -6,15 +6,14 @@ import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Shader;
-import android.os.Build;
-import android.support.annotation.ArrayRes;
-import android.support.annotation.RequiresApi;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.ArrayRes;
 
 import com.bumptech.glide.Glide;
 import com.yarolegovich.discretescrollview.sample.R;
@@ -46,11 +45,6 @@ public class ForecastView extends LinearLayout {
         super(context, attrs, defStyleAttr);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public ForecastView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
-
     {
         evaluator = new ArgbEvaluator();
 
@@ -61,9 +55,9 @@ public class ForecastView extends LinearLayout {
         setGravity(Gravity.CENTER_HORIZONTAL);
         inflate(getContext(), R.layout.view_forecast, this);
 
-        weatherDescription = (TextView) findViewById(R.id.weather_description);
-        weatherImage = (ImageView) findViewById(R.id.weather_image);
-        weatherTemperature = (TextView) findViewById(R.id.weather_temperature);
+        weatherDescription = findViewById(R.id.weather_description);
+        weatherImage = findViewById(R.id.weather_image);
+        weatherTemperature = findViewById(R.id.weather_temperature);
     }
 
     private void initGradient() {

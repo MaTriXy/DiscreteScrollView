@@ -2,12 +2,13 @@ package com.yarolegovich.discretescrollview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.yarolegovich.discretescrollview.transform.DiscreteScrollItemTransformer;
 import com.yarolegovich.discretescrollview.util.ScrollListenerAdapter;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * Created by yarolegovich on 18.02.2017.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class DiscreteScrollView extends RecyclerView {
 
     public static final int NO_POSITION = DiscreteScrollLayoutManager.NO_POSITION;
@@ -29,6 +30,12 @@ public class DiscreteScrollView extends RecyclerView {
 
     private List<ScrollStateChangeListener> scrollStateChangeListeners;
     private List<OnItemChangedListener> onItemChangedListeners;
+    private Runnable notifyItemChangedRunnable = new Runnable() {
+        @Override
+        public void run() {
+            notifyCurrentItemChanged();
+        }
+    };
 
     private boolean isOverScrollEnabled;
 
@@ -78,6 +85,9 @@ public class DiscreteScrollView extends RecyclerView {
 
     @Override
     public boolean fling(int velocityX, int velocityY) {
+        if (layoutManager.isFlingDisallowed(velocityX, velocityY)) {
+            return false;
+        }
         boolean isFling = super.fling(velocityX, velocityY);
         if (isFling) {
             layoutManager.onFling(velocityX, velocityY);
@@ -91,6 +101,15 @@ public class DiscreteScrollView extends RecyclerView {
     public ViewHolder getViewHolder(int position) {
         View view = layoutManager.findViewByPosition(position);
         return view != null ? getChildViewHolder(view) : null;
+    }
+
+    @Override
+    public void scrollToPosition(int position) {
+        int currentPosition = layoutManager.getCurrentPosition();
+        super.scrollToPosition(position);
+        if (currentPosition != position) {
+            notifyCurrentItemChanged();
+        }
     }
 
     /**
@@ -122,6 +141,10 @@ public class DiscreteScrollView extends RecyclerView {
 
     public void setOffscreenItems(int items) {
         layoutManager.setOffscreenItems(items);
+    }
+
+    public void setScrollConfig(@NonNull DSVScrollConfig config) {
+        layoutManager.setScrollConfig(config);
     }
 
     public void setClampTransformProgressAfter(@IntRange(from = 1) int itemCount) {
@@ -189,12 +212,17 @@ public class DiscreteScrollView extends RecyclerView {
     }
 
     private void notifyCurrentItemChanged() {
+        removeCallbacks(notifyItemChangedRunnable);
         if (onItemChangedListeners.isEmpty()) {
             return;
         }
         int current = layoutManager.getCurrentPosition();
         ViewHolder currentHolder = getViewHolder(current);
-        notifyCurrentItemChanged(currentHolder, current);
+        if (currentHolder == null) {
+            post(notifyItemChangedRunnable);
+        } else {
+            notifyCurrentItemChanged(currentHolder, current);
+        }
     }
 
     private class ScrollStateListener implements DiscreteScrollLayoutManager.ScrollStateListener {
@@ -208,6 +236,7 @@ public class DiscreteScrollView extends RecyclerView {
 
         @Override
         public void onScrollStart() {
+            removeCallbacks(notifyItemChangedRunnable);
             if (scrollStateChangeListeners.isEmpty()) {
                 return;
             }
@@ -248,12 +277,7 @@ public class DiscreteScrollView extends RecyclerView {
 
         @Override
         public void onCurrentViewFirstLayout() {
-            post(new Runnable() {
-                @Override
-                public void run() {
-                    notifyCurrentItemChanged();
-                }
-            });
+            notifyCurrentItemChanged();
         }
 
         @Override

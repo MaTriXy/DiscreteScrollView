@@ -1,10 +1,12 @@
 package com.yarolegovich.discretescrollview.sample.shop;
 
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.yarolegovich.discretescrollview.sample.R;
@@ -23,6 +25,7 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ViewHolder> {
         this.data = data;
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
@@ -42,13 +45,13 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ViewHolder> {
         return data.size();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    static class ViewHolder extends RecyclerView.ViewHolder {
 
         private ImageView image;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            image = (ImageView) itemView.findViewById(R.id.image);
+            image = itemView.findViewById(R.id.image);
         }
     }
 }

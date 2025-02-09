@@ -5,16 +5,15 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.view.accessibility.AccessibilityEventCompat;
-import android.support.v4.view.accessibility.AccessibilityRecordCompat;
-import android.support.v7.widget.LinearSmoothScroller;
-import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearSmoothScroller;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.yarolegovich.discretescrollview.transform.DiscreteScrollItemTransformer;
 
@@ -23,7 +22,7 @@ import java.util.Locale;
 /**
  * Created by yarolegovich on 17.02.2017.
  */
-class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
+public class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
 
     static final int NO_POSITION = -1;
 
@@ -68,6 +67,9 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
     private boolean shouldSlideOnFling;
 
     private int viewWidth, viewHeight;
+
+    @NonNull
+    private DSVScrollConfig scrollConfig = DSVScrollConfig.ENABLED;
 
     @NonNull
     private final ScrollStateListener scrollStateListener;
@@ -255,7 +257,7 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
     }
 
     @Override
-    public void onItemsAdded(RecyclerView recyclerView, int positionStart, int itemCount) {
+    public void onItemsAdded(@NonNull RecyclerView recyclerView, int positionStart, int itemCount) {
         int newPosition = currentPosition;
         if (currentPosition == NO_POSITION) {
             newPosition = 0;
@@ -266,7 +268,7 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
     }
 
     @Override
-    public void onItemsRemoved(RecyclerView recyclerView, int positionStart, int itemCount) {
+    public void onItemsRemoved(@NonNull RecyclerView recyclerView, int positionStart, int itemCount) {
         int newPosition = currentPosition;
         if (recyclerViewProxy.getItemCount() == 0) {
             newPosition = NO_POSITION;
@@ -281,7 +283,7 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
     }
 
     @Override
-    public void onItemsChanged(RecyclerView recyclerView) {
+    public void onItemsChanged(@NonNull RecyclerView recyclerView) {
         //notifyDataSetChanged() was called. We need to ensure that currentPosition is not out of bounds
         currentPosition = Math.min(Math.max(0, currentPosition), recyclerViewProxy.getItemCount() - 1);
         dataSetChangeShiftedPosition = true;
@@ -450,6 +452,12 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
         pendingScroll = 0;
     }
 
+    public boolean isFlingDisallowed(int velocityX, int velocityY) {
+        int velocity = orientationHelper.getFlingVelocity(velocityX, velocityY);
+        Direction direction = Direction.fromDelta(velocity);
+        return scrollConfig.isScrollBlocked(direction);
+    }
+
     public void onFling(int velocityX, int velocityY) {
         int velocity = orientationHelper.getFlingVelocity(velocityX, velocityY);
         int throttleValue = shouldSlideOnFling ? Math.abs(velocity / flingThreshold) : 1;
@@ -474,6 +482,11 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
     protected int calculateAllowedScrollIn(Direction direction) {
         if (pendingScroll != 0) {
             return Math.abs(pendingScroll);
+        }
+        if (currentScrollState == RecyclerView.SCROLL_STATE_DRAGGING) {
+            if (scrollConfig.isScrollBlocked(direction)) {
+                return direction.reverse().applyTo(scrolled);
+            }
         }
         int allowedScroll;
         boolean isBoundReached;
@@ -518,32 +531,32 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
     }
 
     @Override
-    public int computeVerticalScrollRange(RecyclerView.State state) {
+    public int computeVerticalScrollRange(@NonNull RecyclerView.State state) {
         return computeScrollRange(state);
     }
 
     @Override
-    public int computeVerticalScrollOffset(RecyclerView.State state) {
+    public int computeVerticalScrollOffset(@NonNull RecyclerView.State state) {
         return computeScrollOffset(state);
     }
 
     @Override
-    public int computeVerticalScrollExtent(RecyclerView.State state) {
+    public int computeVerticalScrollExtent(@NonNull RecyclerView.State state) {
         return computeScrollExtent(state);
     }
 
     @Override
-    public int computeHorizontalScrollRange(RecyclerView.State state) {
+    public int computeHorizontalScrollRange(@NonNull RecyclerView.State state) {
         return computeScrollRange(state);
     }
 
     @Override
-    public int computeHorizontalScrollOffset(RecyclerView.State state) {
+    public int computeHorizontalScrollOffset(@NonNull RecyclerView.State state) {
         return computeScrollOffset(state);
     }
 
     @Override
-    public int computeHorizontalScrollExtent(RecyclerView.State state) {
+    public int computeHorizontalScrollExtent(@NonNull RecyclerView.State state) {
         return computeScrollExtent(state);
     }
 
@@ -562,10 +575,10 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
     }
 
     private int computeScrollRange(RecyclerView.State state) {
-        if (getItemCount() == 0) {
+        if (state.getItemCount() == 0) {
             return 0;
         } else {
-            return scrollToChangeCurrent * (getItemCount() - 1);
+            return scrollToChangeCurrent * (state.getItemCount() - 1);
         }
     }
 
@@ -647,24 +660,29 @@ class DiscreteScrollLayoutManager extends RecyclerView.LayoutManager {
         flingThreshold = threshold;
     }
 
+    public void setScrollConfig(@NonNull DSVScrollConfig config) {
+        scrollConfig = config;
+    }
+
     public int getCurrentPosition() {
         return currentPosition;
     }
 
     @Override
-    public void onInitializeAccessibilityEvent(AccessibilityEvent event) {
+    public void onInitializeAccessibilityEvent(@NonNull AccessibilityEvent event) {
         super.onInitializeAccessibilityEvent(event);
         if (recyclerViewProxy.getChildCount() > 0) {
-            final AccessibilityRecordCompat record = AccessibilityEventCompat.asRecord(event);
-            record.setFromIndex(getPosition(getFirstChild()));
-            record.setToIndex(getPosition(getLastChild()));
+            event.setFromIndex(getPosition(getFirstChild()));
+            event.setToIndex(getPosition(getLastChild()));
         }
     }
 
     private float getCenterRelativePositionOf(View v, int maxDistance) {
+        float childCenterX = getDecoratedLeft(v) + v.getWidth() * 0.5f;
+        float childCenterY = getDecoratedTop(v) + v.getHeight() * 0.5f;
         float distanceFromCenter = orientationHelper.getDistanceFromCenter(recyclerCenter,
-                getDecoratedLeft(v) + childHalfWidth,
-                getDecoratedTop(v) + childHalfHeight);
+                childCenterX,
+                childCenterY);
         return Math.min(Math.max(-1f, distanceFromCenter / maxDistance), 1f);
     }
 
